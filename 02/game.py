@@ -6,7 +6,7 @@ from collections import Counter
 from itertools import permutations
 import random
 from data import DICTIONARY, LETTER_SCORES, POUCH
-from typing import List
+from typing import List, Iterator, Tuple
 
 NUM_LETTERS = 7
 
@@ -22,7 +22,7 @@ def input_word(draw: List[str]) -> str:
         except ValueError:
             print("Not valid, choose another word.")
 
-def _validation(word: str, draw: List[str]):
+def _validation(word: str, draw: List[str]) -> None:
     if word.lower() not in DICTIONARY:
         raise ValueError
     counts = Counter(draw)
@@ -32,23 +32,20 @@ def _validation(word: str, draw: List[str]):
             raise ValueError
     return
 
-# Below 2 functions pass through the same 'draw' argument (smell?).
-# Maybe you want to abstract this into a class?
-# get_possible_dict_words and _get_permutations_draw would be instance methods.
-# 'draw' would be set in the class constructor (__init__).
-def get_possible_dict_words(draw):
-    """Get all possible words from draw which are valid dictionary words.
-    Use the _get_permutations_draw helper and DICTIONARY constant"""
-    return [word for word in _get_permutations_draw(draw) if ''.join(word).lower() in DICTIONARY]
+class Draw():
+    def __init__(self):
+        self.letters = draw_letters()
+    
+    def get_possible_dict_words(self) -> List[str]:
+        """Get all possible words from draw which are valid dictionary words."""
+        return [
+            ''.join(word) for word in self._get_permutations()
+            if ''.join(word).lower() in DICTIONARY
+        ]
 
-
-def _get_permutations_draw(draw):
-    """Helper for get_possible_dict_words to get all permutations of draw letters.
-    Hint: use itertools.permutations"""
-    perms = list()
-    for length in range(1, NUM_LETTERS + 1):
-        perms.extend(permutations(draw, length))
-    return perms
+    def _get_permutations(self) -> Iterator[Tuple]:
+        for length in range(1, NUM_LETTERS + 1):
+            yield from permutations(self.letters, length)
 
 # re-use from challenge 01
 def calc_word_value(word):
@@ -63,13 +60,13 @@ def max_word_value(words):
 
 
 def main():
-    draw = draw_letters()
-    print(f"You have drawn: {draw}")
-    word = input_word(draw)
+    draw = Draw()
+    print(f"You have drawn: {draw.letters}")
+    word = input_word(draw.letters)
     word_score = calc_word_value(word)
     print('Word chosen: {} (value: {})'.format(word, word_score))
 
-    possible_words = get_possible_dict_words(draw)
+    possible_words = draw.get_possible_dict_words()
 
     max_word = max_word_value(possible_words)
     max_word_score = calc_word_value(max_word)
